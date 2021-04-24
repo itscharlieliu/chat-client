@@ -37,7 +37,8 @@ module.exports =  {
     "jest/globals": true
   },
   globals: {
-    process: "readonly"
+    process: "readonly",
+    JSX: "readonly"
   },
   "ignorePatterns": [
     "**/*.css",
