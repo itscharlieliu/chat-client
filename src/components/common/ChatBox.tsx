@@ -79,12 +79,13 @@ const ChatBox = (): JSX.Element => {
     };
 
     const handleSend = () => {
+        setMessage("");
+
         if (!isConnected || !wsAdapter) {
             addMessage("Unable to send message. Not connected to server.");
             return;
         }
         wsAdapter.send(message);
-        setMessage("");
     };
 
     return (
@@ -112,6 +113,11 @@ const ChatBox = (): JSX.Element => {
                 label={"Message"}
                 value={message}
                 onChange={(event: ChangeEvent<HTMLInputElement>) => setMessage(event.target.value)}
+                onKeyUp={(event: React.KeyboardEvent) => {
+                    if (event.key === "Enter") {
+                        handleSend();
+                    }
+                }}
             />
             <Button variant={"contained"} onClick={handleSend}>
                 Test
