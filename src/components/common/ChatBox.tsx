@@ -99,6 +99,11 @@ const ChatBox = (): JSX.Element => {
                 label={"Server Address"}
                 value={wsAddress}
                 onChange={(event: ChangeEvent<HTMLInputElement>) => setWsAddress(event.target.value)}
+                onKeyUp={(event: React.KeyboardEvent) => {
+                    if (event.key === "Enter") {
+                        handleConnect();
+                    }
+                }}
             />
             {isConnected ? (
                 <Button variant={"contained"} onClick={handleDisconnect}>
@@ -120,7 +125,7 @@ const ChatBox = (): JSX.Element => {
                 }}
             />
             <Button variant={"contained"} onClick={handleSend}>
-                Test
+                Send
             </Button>
         </ChatBoxContainer>
     );
