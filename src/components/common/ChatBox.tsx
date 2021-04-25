@@ -22,6 +22,9 @@ const MessagesContainer = styled.div`
     flex-direction: column;
     align-items: flex-start;
 
+    height: 300px;
+    overflow-y: scroll;
+
     padding: 20px;
     border: rgba(0, 0, 0, 0.3) 1px solid;
 `;
@@ -35,28 +38,30 @@ const ChatBox = (): JSX.Element => {
 
     const addMessage = (msg: string) => {
         console.log(`message: ${msg}`);
+        console.log(messages);
         setMessages([...messages, msg]);
     };
 
     useEffect((): (() => void) => {
         const currWsAdapter = wsAdapter;
 
-        if (currWsAdapter) {
-            currWsAdapter.onopen = () => {
-                addMessage(`Connected to ${currWsAdapter.url}`);
-                setIsConnected(true);
-            };
-            currWsAdapter.onerror = () => {
-                addMessage(`Unable to connect to ${currWsAdapter.url}`);
-            };
-        }
-
         return () => currWsAdapter && currWsAdapter.close();
     }, [wsAdapter]);
 
     const handleConnect = () => {
         try {
-            setWsAdapter(new WebSocket(wsAddress));
+            const newWsAdaper = new WebSocket(wsAddress);
+            newWsAdaper.onopen = () => {
+                addMessage(`Connected to ${newWsAdaper.url}`);
+                setIsConnected(true);
+            };
+            newWsAdaper.onerror = () => {
+                addMessage(`Unable to connect to ${newWsAdaper.url}`);
+            };
+            newWsAdaper.onmessage = (event: MessageEvent) => {
+                addMessage(event.data);
+            };
+            setWsAdapter(newWsAdaper);
         } catch (e) {
             console.warn(e);
         }
@@ -70,6 +75,11 @@ const ChatBox = (): JSX.Element => {
     };
 
     const handleSend = () => {
+        if (!isConnected || !wsAdapter) {
+            addMessage("Unable to send message. Not connected to server.");
+            return;
+        }
+        wsAdapter.send(message);
         setMessage("");
     };
 
