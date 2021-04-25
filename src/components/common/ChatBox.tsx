@@ -1,18 +1,36 @@
-import React, { useRef, useState } from "react";
+import { Button, TextField } from "@material-ui/core";
+import React, { ChangeEvent, useEffect, useState } from "react";
 import "./styles/ChatBox.css";
 
 const ChatBox = (): JSX.Element => {
     const [messages, setMessages] = useState<string[]>([]);
+    const [message, setMessage] = useState<string>("");
+    const [wsAddress, setWsAddress] = useState<string>("ws://");
+    const [wsAdapter, setWsAdapter] = useState<WebSocket | null>(null);
 
-    // Use the ref instead of making it a controlled input for performance reasons
-    const inputRef = useRef<HTMLInputElement>(null);
+    useEffect((): (() => void) => {
+        const currWsAdapter = wsAdapter;
+
+        if (currWsAdapter) {
+            currWsAdapter.onopen = () => {
+                console.log(`Connected to ${currWsAdapter.url}`);
+            };
+        }
+
+        return () => currWsAdapter && currWsAdapter.close();
+    }, [wsAdapter]);
+
+    const handleConnect = () => {
+        try {
+            setWsAdapter(new WebSocket(wsAddress));
+        } catch (e) {
+            console.warn(e);
+        }
+    };
 
     const handleSend = () => {
-        if (!inputRef.current) {
-            return;
-        }
-        setMessages([...messages, inputRef.current.value]);
-        inputRef.current && (inputRef.current.value = "");
+        setMessages([...messages, message]);
+        setMessage("");
     };
 
     return (
@@ -22,8 +40,22 @@ const ChatBox = (): JSX.Element => {
                     <span key={"message" + index}>{message}</span>
                 ))}
             </div>
-            <input ref={inputRef} />
-            <button onClick={handleSend}>Test</button>
+            <TextField
+                label={"Server Address"}
+                value={wsAddress}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => setWsAddress(event.target.value)}
+            />
+            <Button variant={"contained"} onClick={handleConnect}>
+                Connect
+            </Button>
+            <TextField
+                label={"Message"}
+                value={message}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => setMessage(event.target.value)}
+            />
+            <Button variant={"contained"} onClick={handleSend}>
+                Test
+            </Button>
         </div>
     );
 };

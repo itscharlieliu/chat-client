@@ -24,7 +24,7 @@ module.exports =  {
     "@typescript-eslint/no-empty-interface": "off",
     "@typescript-eslint/no-inferrable-types": "off",
     "@typescript-eslint/typedef": ["error", { "arrowParameter": true, }],
-    "import/order": ["error", {
+    "import/order": ["warn", {
       "alphabetize": {
         "order": "asc"
       },
