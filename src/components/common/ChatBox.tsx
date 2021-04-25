@@ -32,13 +32,13 @@ const MessagesContainer = styled.div`
 const ChatBox = (): JSX.Element => {
     const [messages, setMessages] = useState<string[]>([]);
     const [message, setMessage] = useState<string>("");
+    const [incomingMessage, setIncomingMessage] = useState<string>("");
     const [wsAddress, setWsAddress] = useState<string>("ws://");
     const [wsAdapter, setWsAdapter] = useState<WebSocket | null>(null);
     const [isConnected, setIsConnected] = useState<boolean>(false);
 
     const addMessage = (msg: string) => {
         console.log(`message: ${msg}`);
-        console.log(messages);
         setMessages([...messages, msg]);
     };
 
@@ -48,18 +48,22 @@ const ChatBox = (): JSX.Element => {
         return () => currWsAdapter && currWsAdapter.close();
     }, [wsAdapter]);
 
+    useEffect(() => {
+        addMessage(incomingMessage);
+    }, [incomingMessage]);
+
     const handleConnect = () => {
         try {
             const newWsAdaper = new WebSocket(wsAddress);
             newWsAdaper.onopen = () => {
-                addMessage(`Connected to ${newWsAdaper.url}`);
+                setIncomingMessage(`Connected to ${newWsAdaper.url}`);
                 setIsConnected(true);
             };
             newWsAdaper.onerror = () => {
-                addMessage(`Unable to connect to ${newWsAdaper.url}`);
+                setIncomingMessage(`Unable to connect to ${newWsAdaper.url}`);
             };
             newWsAdaper.onmessage = (event: MessageEvent) => {
-                addMessage(event.data);
+                setIncomingMessage(event.data);
             };
             setWsAdapter(newWsAdaper);
         } catch (e) {
