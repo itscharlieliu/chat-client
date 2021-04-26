@@ -4,7 +4,7 @@ import styled from "styled-components";
 
 interface Message {
     data: string;
-    timestamp: string;
+    timestamp: Date;
 }
 
 const ChatBoxContainer = styled.div`
@@ -48,7 +48,7 @@ const ChatBox = (): JSX.Element => {
 
         const newMessage = {
             data,
-            timestamp: new Date().getTime().toString(),
+            timestamp: new Date(),
         };
 
         setMessages((currMessages: Message[]) => [...currMessages, newMessage]);
@@ -105,7 +105,9 @@ const ChatBox = (): JSX.Element => {
         <ChatBoxContainer>
             <MessagesContainer>
                 {messages.map((message: Message, index: number) => (
-                    <span key={"message" + index}>{message.data}</span>
+                    <span key={"message" + index}>
+                        {message.timestamp.toString()}: {message.data}
+                    </span>
                 ))}
                 <div ref={messagesEndRef} />
             </MessagesContainer>
