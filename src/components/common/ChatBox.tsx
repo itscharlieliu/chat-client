@@ -1,6 +1,11 @@
 import { Button, TextField } from "@material-ui/core";
-import React, { ChangeEvent, useEffect, useState } from "react";
+import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
+
+interface Message {
+    data: string;
+    timestamp: string;
+}
 
 const ChatBoxContainer = styled.div`
     display: grid;
@@ -30,16 +35,27 @@ const MessagesContainer = styled.div`
 `;
 
 const ChatBox = (): JSX.Element => {
-    const [messages, setMessages] = useState<string[]>([]);
-    const [message, setMessage] = useState<string>("");
-    const [incomingMessage, setIncomingMessage] = useState<string>("");
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [chatBoxValue, setChatBoxValue] = useState<string>("");
     const [wsAddress, setWsAddress] = useState<string>("ws://");
     const [wsAdapter, setWsAdapter] = useState<WebSocket | null>(null);
     const [isConnected, setIsConnected] = useState<boolean>(false);
 
-    const addMessage = (msg: string) => {
-        console.log(`message: ${msg}`);
-        setMessages([...messages, msg]);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const addMessage = (data: string) => {
+        console.log(`message: ${data}`);
+
+        const newMessage = {
+            data,
+            timestamp: new Date().getTime().toString(),
+        };
+
+        setMessages((currMessages: Message[]) => [...currMessages, newMessage]);
+
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
     };
 
     useEffect((): (() => void) => {
@@ -48,26 +64,23 @@ const ChatBox = (): JSX.Element => {
         return () => currWsAdapter && currWsAdapter.close();
     }, [wsAdapter]);
 
-    useEffect(() => {
-        addMessage(incomingMessage);
-    }, [incomingMessage]);
-
     const handleConnect = () => {
         try {
             const newWsAdaper = new WebSocket(wsAddress);
             newWsAdaper.onopen = () => {
-                setIncomingMessage(`Connected to ${newWsAdaper.url}`);
+                addMessage(`Connected to ${newWsAdaper.url}`);
                 setIsConnected(true);
             };
             newWsAdaper.onerror = () => {
-                setIncomingMessage(`Unable to connect to ${newWsAdaper.url}`);
+                addMessage(`Unable to connect to ${newWsAdaper.url}`);
             };
             newWsAdaper.onmessage = (event: MessageEvent) => {
-                setIncomingMessage(event.data);
+                addMessage(event.data);
             };
             setWsAdapter(newWsAdaper);
         } catch (e) {
             console.warn(e);
+            addMessage("Invalid server address");
         }
     };
 
@@ -79,21 +92,22 @@ const ChatBox = (): JSX.Element => {
     };
 
     const handleSend = () => {
-        setMessage("");
+        setChatBoxValue("");
 
         if (!isConnected || !wsAdapter) {
             addMessage("Unable to send message. Not connected to server.");
             return;
         }
-        wsAdapter.send(message);
+        wsAdapter.send(chatBoxValue);
     };
 
     return (
         <ChatBoxContainer>
             <MessagesContainer>
-                {messages.map((message: string, index: number) => (
-                    <span key={"message" + index}>{message}</span>
+                {messages.map((message: Message, index: number) => (
+                    <span key={"message" + index}>{message.data}</span>
                 ))}
+                <div ref={messagesEndRef} />
             </MessagesContainer>
             <TextField
                 label={"Server Address"}
@@ -116,8 +130,8 @@ const ChatBox = (): JSX.Element => {
             )}
             <TextField
                 label={"Message"}
-                value={message}
-                onChange={(event: ChangeEvent<HTMLInputElement>) => setMessage(event.target.value)}
+                value={chatBoxValue}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => setChatBoxValue(event.target.value)}
                 onKeyUp={(event: React.KeyboardEvent) => {
                     if (event.key === "Enter") {
                         handleSend();
