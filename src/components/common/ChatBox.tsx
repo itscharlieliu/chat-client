@@ -4,7 +4,7 @@ import styled from "styled-components";
 
 interface Message {
     data: string;
-    timestamp: Date;
+    timestamp: string;
 }
 
 const ChatBoxContainer = styled.div`
@@ -41,14 +41,21 @@ const ChatBox = (): JSX.Element => {
     const [wsAdapter, setWsAdapter] = useState<WebSocket | null>(null);
     const [isConnected, setIsConnected] = useState<boolean>(false);
 
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null); 
 
     const addMessage = (data: string) => {
         console.log(`message: ${data}`);
 
+        const date = new Date()
+
+        const year = new Intl.DateTimeFormat("en", 
+        {  hour: "2-digit", minute: "2-digit", second: "2-digit"}).format(date);
+        // const month = new Intl.DateTimeFormat("en", { month: "short" }).format(date);
+        // const day = new Intl.DateTimeFormat("en", { day: "2-digit" }).format(date);
+
         const newMessage = {
             data,
-            timestamp: new Date(),
+            timestamp: `${year}`,   
         };
 
         setMessages((currMessages: Message[]) => [...currMessages, newMessage]);
@@ -106,7 +113,8 @@ const ChatBox = (): JSX.Element => {
             <MessagesContainer>
                 {messages.map((message: Message, index: number) => (
                     <span key={"message" + index}>
-                        {message.timestamp.toString()}: {message.data}
+                        {/* Render timestamp as minutes elapsed */}
+                        {message.timestamp}: {message.data}
                     </span>
                 ))}
                 <div ref={messagesEndRef} />
