@@ -41,21 +41,22 @@ const ChatBox = (): JSX.Element => {
     const [wsAdapter, setWsAdapter] = useState<WebSocket | null>(null);
     const [isConnected, setIsConnected] = useState<boolean>(false);
 
-    const messagesEndRef = useRef<HTMLDivElement>(null); 
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const addMessage = (data: string) => {
         console.log(`message: ${data}`);
 
-        const date = new Date()
+        const date = new Date();
 
-        const year = new Intl.DateTimeFormat("en", 
-        {  hour: "2-digit", minute: "2-digit", second: "2-digit"}).format(date);
-        // const month = new Intl.DateTimeFormat("en", { month: "short" }).format(date);
-        // const day = new Intl.DateTimeFormat("en", { day: "2-digit" }).format(date);
+        const timestamp = new Intl.DateTimeFormat("en", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+        }).format(date);
 
         const newMessage = {
             data,
-            timestamp: `${year}`,   
+            timestamp,
         };
 
         setMessages((currMessages: Message[]) => [...currMessages, newMessage]);
@@ -82,6 +83,7 @@ const ChatBox = (): JSX.Element => {
                 addMessage(`Unable to connect to ${newWsAdaper.url}`);
             };
             newWsAdaper.onmessage = (event: MessageEvent) => {
+                console.log(event);
                 addMessage(event.data);
             };
             setWsAdapter(newWsAdaper);
@@ -108,12 +110,34 @@ const ChatBox = (): JSX.Element => {
         wsAdapter.send(chatBoxValue);
     };
 
+    const handleSelectFile = () => {
+        // We create a "ghost" input to allow us to open the file browser
+        const input = document.createElement("input");
+        input.type = "file";
+        input.onchange = () => {
+            // use this method to get file and perform respective operations
+
+            if (!input.files || !input.files.length) {
+                return;
+            }
+
+            // Currently only read the first file. TODO read multiple
+            const file = input.files[0];
+
+            const reader = new FileReader();
+            reader.addEventListener("load", (event: ProgressEvent<FileReader>) => {
+                event.target && console.log(event.target.result);
+            });
+            reader.readAsText(file);
+        };
+        input.click();
+    };
+
     return (
         <ChatBoxContainer>
             <MessagesContainer>
                 {messages.map((message: Message, index: number) => (
                     <span key={"message" + index}>
-                        {/* Render timestamp as minutes elapsed */}
                         {message.timestamp}: {message.data}
                     </span>
                 ))}
@@ -150,6 +174,9 @@ const ChatBox = (): JSX.Element => {
             />
             <Button variant={"contained"} onClick={handleSend}>
                 Send
+            </Button>
+            <Button variant={"contained"} onClick={handleSelectFile}>
+                Test
             </Button>
         </ChatBoxContainer>
     );
