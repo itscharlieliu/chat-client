@@ -7,6 +7,18 @@ interface Message {
     timestamp: string;
 }
 
+const displayFiles = (files: FileList): string => {
+    if (!files) {
+        return "";
+    }
+
+    let result = "";
+    for (let i = 0; i < files.length; ++i) {
+        result += files[i].name;
+    }
+    return result;
+};
+
 const ChatBoxContainer = styled.div`
     display: grid;
     grid-template-columns: auto 150px;
@@ -40,6 +52,7 @@ const ChatBox = (): JSX.Element => {
     const [wsAddress, setWsAddress] = useState<string>("ws://");
     const [wsAdapter, setWsAdapter] = useState<WebSocket | null>(null);
     const [isConnected, setIsConnected] = useState<boolean>(false);
+    const [files, setFiles] = useState<FileList | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -107,6 +120,18 @@ const ChatBox = (): JSX.Element => {
             addMessage("Unable to send message. Not connected to server.");
             return;
         }
+
+        if (files !== null) {
+            // Currently only read the first file. TODO read multiple
+            const file = files[0];
+
+            const reader = new FileReader();
+            reader.addEventListener("load", (event: ProgressEvent<FileReader>) => {
+                event.target && console.log(event.target.result);
+            });
+            reader.readAsText(file);
+        }
+
         wsAdapter.send(chatBoxValue);
     };
 
@@ -114,6 +139,7 @@ const ChatBox = (): JSX.Element => {
         // We create a "ghost" input to allow us to open the file browser
         const input = document.createElement("input");
         input.type = "file";
+        input.multiple = true;
         input.onchange = () => {
             // use this method to get file and perform respective operations
 
@@ -121,14 +147,7 @@ const ChatBox = (): JSX.Element => {
                 return;
             }
 
-            // Currently only read the first file. TODO read multiple
-            const file = input.files[0];
-
-            const reader = new FileReader();
-            reader.addEventListener("load", (event: ProgressEvent<FileReader>) => {
-                event.target && console.log(event.target.result);
-            });
-            reader.readAsText(file);
+            setFiles(input.files);
         };
         input.click();
     };
@@ -175,6 +194,7 @@ const ChatBox = (): JSX.Element => {
             <Button variant={"contained"} onClick={handleSend}>
                 Send
             </Button>
+            <TextField value={files ? displayFiles(files) : ""} />
             <Button variant={"contained"} onClick={handleSelectFile}>
                 Test
             </Button>
