@@ -49,7 +49,8 @@ const MessagesContainer = styled.div`
 const ChatBox = (): JSX.Element => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [chatBoxValue, setChatBoxValue] = useState<string>("");
-    const [wsAddress, setWsAddress] = useState<string>("ws://");
+    // TODO Change this address or set up a way to persist addresses
+    const [wsAddress, setWsAddress] = useState<string>("ws://127.0.0.1:8080");
     const [wsAdapter, setWsAdapter] = useState<WebSocket | null>(null);
     const [isConnected, setIsConnected] = useState<boolean>(false);
     const [files, setFiles] = useState<FileList | null>(null);
@@ -57,8 +58,6 @@ const ChatBox = (): JSX.Element => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const addMessage = (data: string) => {
-        console.log(`message: ${data}`);
-
         const date = new Date();
 
         const timestamp = new Intl.DateTimeFormat("en", {
@@ -96,7 +95,6 @@ const ChatBox = (): JSX.Element => {
                 addMessage(`Unable to connect to ${newWsAdaper.url}`);
             };
             newWsAdaper.onmessage = (event: MessageEvent) => {
-                console.log(event);
                 addMessage(event.data);
             };
             setWsAdapter(newWsAdaper);
@@ -122,14 +120,15 @@ const ChatBox = (): JSX.Element => {
         }
 
         if (files !== null) {
-            // Currently only read the first file. TODO read multiple
-            const file = files[0];
+            for (let i = 0; i < files.length; ++i) {
+                const file = files[i];
 
-            const reader = new FileReader();
-            reader.addEventListener("load", (event: ProgressEvent<FileReader>) => {
-                event.target && console.log(event.target.result);
-            });
-            reader.readAsText(file);
+                const reader = new FileReader();
+                reader.addEventListener("load", (event: ProgressEvent<FileReader>) => {
+                    event.target && console.log(event.target.result);
+                });
+                reader.readAsArrayBuffer(file);
+            }
         }
 
         wsAdapter.send(chatBoxValue);
