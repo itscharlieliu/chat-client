@@ -57,6 +57,12 @@ const ChatBox = (): JSX.Element => {
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    useEffect((): (() => void) => {
+        const currWsAdapter = wsAdapter;
+
+        return () => currWsAdapter && currWsAdapter.close();
+    }, [wsAdapter]);
+
     const addMessage = (data: string) => {
         const date = new Date();
 
@@ -78,12 +84,6 @@ const ChatBox = (): JSX.Element => {
         }
     };
 
-    useEffect((): (() => void) => {
-        const currWsAdapter = wsAdapter;
-
-        return () => currWsAdapter && currWsAdapter.close();
-    }, [wsAdapter]);
-
     const handleConnect = () => {
         try {
             const newWsAdaper = new WebSocket(wsAddress);
@@ -95,6 +95,10 @@ const ChatBox = (): JSX.Element => {
                 addMessage(`Unable to connect to ${newWsAdaper.url}`);
             };
             newWsAdaper.onmessage = (event: MessageEvent) => {
+                if (typeof event.data !== "string") {
+                    console.log(event.data);
+                    return;
+                }
                 addMessage(event.data);
             };
             setWsAdapter(newWsAdaper);
@@ -125,7 +129,11 @@ const ChatBox = (): JSX.Element => {
 
                 const reader = new FileReader();
                 reader.addEventListener("load", (event: ProgressEvent<FileReader>) => {
-                    event.target && console.log(event.target.result);
+                    if (!event.target || !event.target.result) {
+                        return;
+                    }
+                    console.log("Got here");
+                    wsAdapter.send(event.target.result);
                 });
                 reader.readAsArrayBuffer(file);
             }
