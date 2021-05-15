@@ -126,16 +126,8 @@ const ChatBox = (): JSX.Element => {
         if (files !== null) {
             for (let i = 0; i < files.length; ++i) {
                 const file = files[i];
-
-                const reader = new FileReader();
-                reader.addEventListener("load", (event: ProgressEvent<FileReader>) => {
-                    if (!event.target || !event.target.result) {
-                        return;
-                    }
-                    console.log("Got here");
-                    wsAdapter.send(event.target.result);
-                });
-                reader.readAsArrayBuffer(file);
+                console.log(file);
+                // TODO Upload to s3 and send the link via websocket
             }
         }
 
@@ -149,7 +141,6 @@ const ChatBox = (): JSX.Element => {
         input.multiple = true;
         input.onchange = () => {
             // use this method to get file and perform respective operations
-
             if (!input.files || !input.files.length) {
                 return;
             }
