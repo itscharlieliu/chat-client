@@ -198,6 +198,7 @@ const ChatBox = (): JSX.Element => {
             <Button variant={"contained"} onClick={handleSelectFile}>
                 Test
             </Button>
+            <span>{new Date().toISOString()}</span>
         </ChatBoxContainer>
     );
 };
