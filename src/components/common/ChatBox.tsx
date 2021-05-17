@@ -1,5 +1,5 @@
 import { CognitoIdentityClient } from "@aws-sdk/client-cognito-identity";
-import { CreateMultipartUploadCommand, S3Client } from "@aws-sdk/client-s3";
+import { CreateMultipartUploadCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { fromCognitoIdentityPool } from "@aws-sdk/credential-provider-cognito-identity";
 import { Button, TextField } from "@material-ui/core";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
@@ -145,14 +145,15 @@ const ChatBox = (): JSX.Element => {
                 console.log(file);
                 // TODO Upload to s3 and send the link via websocket
 
-                const uploadId = await s3client.current.send(
-                    new CreateMultipartUploadCommand({
-                        Bucket: BUCKET_NAME,
-                        Key: "test",
-                    }),
-                );
+                // const uploadId = await s3client.current.send(
+                //     new PutObjectCommand({
+                //         Body:
+                //         Bucket: BUCKET_NAME,
+                //         Key: "test-title.txt",
+                //     }),
+                // );
 
-                console.log(uploadId);
+                // console.log(uploadId);
             }
         }
 
