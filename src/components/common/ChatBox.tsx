@@ -1,13 +1,8 @@
-import { CognitoIdentityClient } from "@aws-sdk/client-cognito-identity";
-import { CreateMultipartUploadCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { fromCognitoIdentityPool } from "@aws-sdk/credential-provider-cognito-identity";
 import { Button, TextField } from "@material-ui/core";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 
-const REGION = "us-west-1";
-const IDENTITY_POOL_ID = "us-west-1:b5cf5dd2-6da9-4ac9-8f6a-c09707f3d949";
-const BUCKET_NAME = "dropper-files";
+import { s3upload } from "../../utils/awsUtils";
 
 interface Message {
     data: string;
@@ -63,15 +58,6 @@ const ChatBox = (): JSX.Element => {
     const [files, setFiles] = useState<FileList | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const credentials = useRef(
-        fromCognitoIdentityPool({
-            client: new CognitoIdentityClient({
-                region: REGION,
-            }),
-            identityPoolId: IDENTITY_POOL_ID,
-        }),
-    );
-    const s3client = useRef(new S3Client({ region: REGION, credentials: credentials.current }));
 
     useEffect((): (() => void) => {
         const currWsAdapter = wsAdapter;
@@ -142,18 +128,7 @@ const ChatBox = (): JSX.Element => {
         if (files !== null) {
             for (let i = 0; i < files.length; ++i) {
                 const file = files[i];
-                console.log(file);
-                // TODO Upload to s3 and send the link via websocket
-
-                // const uploadId = await s3client.current.send(
-                //     new PutObjectCommand({
-                //         Body:
-                //         Bucket: BUCKET_NAME,
-                //         Key: "test-title.txt",
-                //     }),
-                // );
-
-                // console.log(uploadId);
+                s3upload(file);
             }
         }
 
@@ -167,6 +142,7 @@ const ChatBox = (): JSX.Element => {
         input.multiple = true;
         input.onchange = () => {
             // use this method to get file and perform respective operations
+
             if (!input.files || !input.files.length) {
                 return;
             }

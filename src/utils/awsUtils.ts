@@ -6,7 +6,7 @@ const REGION = "us-west-1";
 const IDENTITY_POOL_ID = "us-west-1:b5cf5dd2-6da9-4ac9-8f6a-c09707f3d949";
 const BUCKET_NAME = "dropper-files";
 
-const s3upload = (file: File) => {
+const s3uploader = () => {
     const credentials = fromCognitoIdentityPool({
         client: new CognitoIdentityClient({
             region: REGION,
@@ -16,14 +16,19 @@ const s3upload = (file: File) => {
 
     const s3client = new S3Client({ region: REGION, credentials });
 
-    return (fileBytes: ArrayBuffer) => {
-        const awsCommand = new PutObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: "test",
-        });
-
-        s3client.current.send(awsCommand);
+    return async (file: File) => {
+        try {
+            await s3client.send(
+                new PutObjectCommand({
+                    Body: file,
+                    Bucket: BUCKET_NAME,
+                    Key: "test",
+                }),
+            );
+        } catch (e) {
+            console.warn(e);
+        }
     };
 };
 
-export {};
+export const s3upload = s3uploader();
