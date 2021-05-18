@@ -3,6 +3,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 import { fromCognitoIdentityPool } from "@aws-sdk/credential-provider-cognito-identity";
 import { Progress, Upload } from "@aws-sdk/lib-storage";
 
+// TODO Get these values from env
 const REGION = "us-west-1";
 const IDENTITY_POOL_ID = "us-west-1:b5cf5dd2-6da9-4ac9-8f6a-c09707f3d949";
 const BUCKET_NAME = "dropper-files";
@@ -17,15 +18,8 @@ const s3uploader = () => {
 
     const s3client = new S3Client({ region: REGION, credentials });
 
-    return async (file: File) => {
+    return async (file: File, onProgress?: (progress: Progress) => void, onError?: (error: Error) => void) => {
         try {
-            // await s3client.send(
-            //     new PutObjectCommand({
-            //         Body: file,
-            //         Bucket: BUCKET_NAME,
-            //         Key: file.name,
-            //     }),
-            // );
             const parallelUpload = new Upload({
                 client: s3client,
                 params: {
@@ -35,15 +29,15 @@ const s3uploader = () => {
                 },
             });
 
-            parallelUpload.on("httpUploadProgress", (progress: Progress) => {
-                console.log(progress);
-            });
+            onProgress &&
+                parallelUpload.on("httpUploadProgress", (progress: Progress) => {
+                    onProgress(progress);
+                });
 
             await parallelUpload.done();
-
-            console.log("Done");
         } catch (e) {
             console.warn(e);
+            onError && onError(e);
         }
     };
 };

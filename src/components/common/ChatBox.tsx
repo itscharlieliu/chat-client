@@ -1,24 +1,33 @@
+import { Progress } from "@aws-sdk/lib-storage";
 import { Button, TextField } from "@material-ui/core";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 
 import { s3upload } from "../../utils/awsUtils";
+import debouncer from "../../utils/debouncer";
 
 interface Message {
     data: string;
     timestamp: string;
 }
 
-const displayFiles = (files: FileList): string => {
-    if (!files) {
-        return "";
-    }
+interface DisplayFile {
+    file: File;
+    progressPercentage: number; // From 0 to 1
+    confirmed: boolean;
+    error?: Error;
+}
 
+interface SelectedFilesProps {
+    displayFiles: DisplayFile[];
+}
+
+const SelectedFiles = (props: SelectedFilesProps): JSX.Element => {
     let result = "";
-    for (let i = 0; i < files.length; ++i) {
-        result += files[i].name;
+    for (let i = 0; i < props.displayFiles.length; ++i) {
+        result += `${props.displayFiles[i].file.name} ${props.displayFiles[i].progressPercentage}`;
     }
-    return result;
+    return <span>{result}</span>;
 };
 
 const ChatBoxContainer = styled.div`
@@ -55,7 +64,7 @@ const ChatBox = (): JSX.Element => {
     const [wsAddress, setWsAddress] = useState<string>("ws://127.0.0.1:8080");
     const [wsAdapter, setWsAdapter] = useState<WebSocket | null>(null);
     const [isConnected, setIsConnected] = useState<boolean>(false);
-    const [files, setFiles] = useState<FileList | null>(null);
+    const [displayFiles, setDisplayFiles] = useState<DisplayFile[]>([]);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -125,11 +134,38 @@ const ChatBox = (): JSX.Element => {
             return;
         }
 
-        if (files !== null) {
-            for (let i = 0; i < files.length; ++i) {
-                const file = files[i];
-                s3upload(file);
-            }
+        for (let i = 0; i < displayFiles.length; ++i) {
+            const file = displayFiles[i].file;
+
+            const debounce = debouncer(2000);
+
+            const onProgress = (progress: Progress) => {
+                debounce(() =>
+                    setDisplayFiles((curr: DisplayFile[]): DisplayFile[] => {
+                        const next = [...curr]; // Shallow copy
+
+                        console.log(progress);
+
+                        if (progress.loaded && progress.total) {
+                            next[i].progressPercentage = progress.loaded / progress.total;
+                        }
+
+                        return next;
+                    }),
+                );
+            };
+
+            const onError = (error: Error) => {
+                setDisplayFiles((curr: DisplayFile[]): DisplayFile[] => {
+                    const next = [...curr]; // Shallow copy
+
+                    next[i].error = error;
+
+                    return next;
+                });
+            };
+
+            await s3upload(file, onProgress, onError);
         }
 
         wsAdapter.send(chatBoxValue);
@@ -147,7 +183,13 @@ const ChatBox = (): JSX.Element => {
                 return;
             }
 
-            setFiles(input.files);
+            const selection: DisplayFile[] = [];
+
+            for (let i = 0; i < input.files.length; ++i) {
+                selection.push({ file: input.files[i], progressPercentage: 0, confirmed: false });
+            }
+
+            setDisplayFiles(selection);
         };
         input.click();
     };
@@ -194,11 +236,10 @@ const ChatBox = (): JSX.Element => {
             <Button variant={"contained"} onClick={handleSend}>
                 Send
             </Button>
-            <TextField value={files ? displayFiles(files) : ""} />
+            <SelectedFiles displayFiles={displayFiles}></SelectedFiles>
             <Button variant={"contained"} onClick={handleSelectFile}>
                 Test
             </Button>
-            <span>{new Date().toISOString()}</span>
         </ChatBoxContainer>
     );
 };
