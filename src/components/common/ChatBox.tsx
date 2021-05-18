@@ -2,6 +2,7 @@ import { Progress } from "@aws-sdk/lib-storage";
 import { Button, TextField } from "@material-ui/core";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
+import { v4 as uuidv4 } from "uuid";
 
 import { s3upload } from "../../utils/awsUtils";
 import debouncer from "../../utils/debouncer";
@@ -16,6 +17,7 @@ interface DisplayFile {
     progressPercentage: number; // From 0 to 1
     confirmed: boolean;
     error?: Error;
+    key: string; // UUID
 }
 
 interface SelectedFilesProps {
@@ -144,8 +146,6 @@ const ChatBox = (): JSX.Element => {
                     setDisplayFiles((curr: DisplayFile[]): DisplayFile[] => {
                         const next = [...curr]; // Shallow copy
 
-                        console.log(progress);
-
                         if (progress.loaded && progress.total) {
                             next[i].progressPercentage = progress.loaded / progress.total;
                         }
@@ -165,7 +165,7 @@ const ChatBox = (): JSX.Element => {
                 });
             };
 
-            await s3upload(file, onProgress, onError);
+            await s3upload(`${displayFiles[i].key}/${file.name}`, file, onProgress, onError);
         }
 
         wsAdapter.send(chatBoxValue);
@@ -186,7 +186,7 @@ const ChatBox = (): JSX.Element => {
             const selection: DisplayFile[] = [];
 
             for (let i = 0; i < input.files.length; ++i) {
-                selection.push({ file: input.files[i], progressPercentage: 0, confirmed: false });
+                selection.push({ file: input.files[i], progressPercentage: 0, confirmed: false, key: uuidv4() });
             }
 
             setDisplayFiles(selection);
