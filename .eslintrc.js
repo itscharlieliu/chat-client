@@ -24,7 +24,7 @@ module.exports = {
         "@typescript-eslint/no-unused-vars": "warn",
         "no-unused-vars": "off",
         "import/order": [
-            "warn",
+            "error",
             {
                 alphabetize: {
                     order: "asc",

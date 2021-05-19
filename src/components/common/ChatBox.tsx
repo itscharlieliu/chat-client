@@ -1,16 +1,21 @@
 import { Progress } from "@aws-sdk/lib-storage";
 import { Button, TextField } from "@material-ui/core";
-import React, { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { v4 as uuidv4 } from "uuid";
 
 import { s3upload } from "../../utils/awsUtils";
 import debouncer from "../../utils/debouncer";
 
+interface FileMetadata {
+    filename: string;
+    url: string;
+}
+
 interface Message {
-    data: string;
-    isoDate?: string;
-    isFile?: boolean;
+    text: string;
+    isoDate: string;
+    files: FileMetadata[];
 }
 
 interface DisplayFile {
@@ -25,14 +30,22 @@ interface SelectedFilesProps {
     displayFiles: DisplayFile[];
 }
 
-const formatDate = (isoDate?: string) => {
-    const date = isoDate ? new Date(isoDate) : new Date();
+const formatDate = (isoDate: string) => {
+    const date = new Date(isoDate);
 
     return new Intl.DateTimeFormat("en", {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
     }).format(date);
+};
+
+const createMessage = (text?: string, isoDate?: string, files?: FileMetadata[]): Message => {
+    return {
+        text: text ? text : "",
+        isoDate: isoDate ? isoDate : new Date().toISOString(),
+        files: files ? files : [],
+    };
 };
 
 const SelectedFiles = (props: SelectedFilesProps): JSX.Element => {
@@ -88,22 +101,6 @@ const ChatBox = (): JSX.Element => {
     }, [wsAdapter]);
 
     const addMessage = (message: Message) => {
-        // const date = isoDate ? new Date(isoDate) : new Date();
-
-        // const timestamp = new Intl.DateTimeFormat("en", {
-        //     hour: "2-digit",
-        //     minute: "2-digit",
-        //     second: "2-digit",
-        // }).format(date);
-
-        // const newMessage = {
-        //     data,
-        //     timestamp,
-        //     isFile,
-        // };
-
-        console.log("Got here");
-
         setMessages((currMessages: Message[]) => [...currMessages, message]);
 
         if (messagesEndRef.current) {
@@ -115,11 +112,11 @@ const ChatBox = (): JSX.Element => {
         try {
             const newWsAdaper = new WebSocket(wsAddress);
             newWsAdaper.onopen = () => {
-                addMessage({ data: `Connected to ${newWsAdaper.url}` });
+                addMessage(createMessage(`Connected to ${newWsAdaper.url}`));
                 setIsConnected(true);
             };
             newWsAdaper.onerror = () => {
-                addMessage({ data: `Unable to connect to ${newWsAdaper.url}` });
+                addMessage(createMessage(`Unable to connect to ${newWsAdaper.url}`));
             };
             newWsAdaper.onmessage = (event: MessageEvent) => {
                 if (typeof event.data !== "string") {
@@ -137,7 +134,7 @@ const ChatBox = (): JSX.Element => {
             setWsAdapter(newWsAdaper);
         } catch (e) {
             console.warn(e);
-            addMessage({ data: "Invalid server address" });
+            addMessage(createMessage("Invalid server address"));
         }
     };
 
@@ -145,19 +142,21 @@ const ChatBox = (): JSX.Element => {
         const url = wsAdapter ? wsAdapter.url : "unknown";
         setWsAdapter(null);
         setIsConnected(false);
-        addMessage({ data: `Disconnected from ${url}` });
+        addMessage(createMessage(`Disconnected from ${url}`));
     };
 
     const handleSend = async () => {
         if (!isConnected || !wsAdapter) {
-            addMessage({ data: "Unable to send message. Not connected to server." });
+            addMessage(createMessage("Unable to send message. Not connected to server."));
             return;
         }
+
+        const message: Message = createMessage(chatBoxValue);
 
         for (let i = 0; i < displayFiles.length; ++i) {
             const file = displayFiles[i].file;
 
-            const debounce = debouncer(2000);
+            const debounce = debouncer(1000);
 
             const onProgress = (progress: Progress) => {
                 debounce(() =>
@@ -183,14 +182,17 @@ const ChatBox = (): JSX.Element => {
                 });
             };
 
-            await s3upload(`${displayFiles[i].key}/${file.name}`, file, onProgress, onError);
+            const url = await s3upload(`${displayFiles[i].key}/${file.name}`, file, onProgress, onError);
+
+            if (displayFiles[i].error) {
+                console.warn(`Error while uploading file: ${file.name}`);
+                continue;
+            }
+
+            message.files.push({ filename: file.name, url });
         }
 
-        wsAdapter.send(
-            JSON.stringify({
-                data: chatBoxValue,
-            }),
-        );
+        wsAdapter.send(JSON.stringify(message));
         setChatBoxValue("");
     };
 
@@ -220,9 +222,14 @@ const ChatBox = (): JSX.Element => {
     const Messages = () => (
         <>
             {messages.map((message: Message, index: number) => (
-                <span key={"message" + index}>
-                    {formatDate(message.isoDate)}: {message.data}
-                </span>
+                <div key={"message" + index}>
+                    {formatDate(message.isoDate)}: {message.text}
+                    {message.files.map((file: FileMetadata, fileIndex: number) => (
+                        <a key={"message" + index + "file" + fileIndex} href={file.url}>
+                            {file.filename}
+                        </a>
+                    ))}
+                </div>
             ))}
         </>
     );
