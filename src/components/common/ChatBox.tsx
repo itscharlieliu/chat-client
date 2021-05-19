@@ -1,6 +1,6 @@
 import { Progress } from "@aws-sdk/lib-storage";
 import { Button, TextField } from "@material-ui/core";
-import React, { ChangeEvent, useEffect, useRef, useState } from "react";
+import React, { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import { v4 as uuidv4 } from "uuid";
 
@@ -9,7 +9,8 @@ import debouncer from "../../utils/debouncer";
 
 interface Message {
     data: string;
-    timestamp: string;
+    isoDate?: string;
+    isFile?: boolean;
 }
 
 interface DisplayFile {
@@ -23,6 +24,16 @@ interface DisplayFile {
 interface SelectedFilesProps {
     displayFiles: DisplayFile[];
 }
+
+const formatDate = (isoDate?: string) => {
+    const date = isoDate ? new Date(isoDate) : new Date();
+
+    return new Intl.DateTimeFormat("en", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+    }).format(date);
+};
 
 const SelectedFiles = (props: SelectedFilesProps): JSX.Element => {
     let result = "";
@@ -76,21 +87,24 @@ const ChatBox = (): JSX.Element => {
         return () => currWsAdapter && currWsAdapter.close();
     }, [wsAdapter]);
 
-    const addMessage = (data: string) => {
-        const date = new Date();
+    const addMessage = (message: Message) => {
+        // const date = isoDate ? new Date(isoDate) : new Date();
 
-        const timestamp = new Intl.DateTimeFormat("en", {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-        }).format(date);
+        // const timestamp = new Intl.DateTimeFormat("en", {
+        //     hour: "2-digit",
+        //     minute: "2-digit",
+        //     second: "2-digit",
+        // }).format(date);
 
-        const newMessage = {
-            data,
-            timestamp,
-        };
+        // const newMessage = {
+        //     data,
+        //     timestamp,
+        //     isFile,
+        // };
 
-        setMessages((currMessages: Message[]) => [...currMessages, newMessage]);
+        console.log("Got here");
+
+        setMessages((currMessages: Message[]) => [...currMessages, message]);
 
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -101,23 +115,29 @@ const ChatBox = (): JSX.Element => {
         try {
             const newWsAdaper = new WebSocket(wsAddress);
             newWsAdaper.onopen = () => {
-                addMessage(`Connected to ${newWsAdaper.url}`);
+                addMessage({ data: `Connected to ${newWsAdaper.url}` });
                 setIsConnected(true);
             };
             newWsAdaper.onerror = () => {
-                addMessage(`Unable to connect to ${newWsAdaper.url}`);
+                addMessage({ data: `Unable to connect to ${newWsAdaper.url}` });
             };
             newWsAdaper.onmessage = (event: MessageEvent) => {
                 if (typeof event.data !== "string") {
                     console.log(event.data);
                     return;
                 }
-                addMessage(event.data);
+
+                try {
+                    const message: Message = JSON.parse(event.data);
+                    addMessage(message);
+                } catch (error) {
+                    console.warn(error);
+                }
             };
             setWsAdapter(newWsAdaper);
         } catch (e) {
             console.warn(e);
-            addMessage("Invalid server address");
+            addMessage({ data: "Invalid server address" });
         }
     };
 
@@ -125,14 +145,12 @@ const ChatBox = (): JSX.Element => {
         const url = wsAdapter ? wsAdapter.url : "unknown";
         setWsAdapter(null);
         setIsConnected(false);
-        addMessage(`Disconnected from ${url}`);
+        addMessage({ data: `Disconnected from ${url}` });
     };
 
     const handleSend = async () => {
-        setChatBoxValue("");
-
         if (!isConnected || !wsAdapter) {
-            addMessage("Unable to send message. Not connected to server.");
+            addMessage({ data: "Unable to send message. Not connected to server." });
             return;
         }
 
@@ -168,7 +186,12 @@ const ChatBox = (): JSX.Element => {
             await s3upload(`${displayFiles[i].key}/${file.name}`, file, onProgress, onError);
         }
 
-        wsAdapter.send(chatBoxValue);
+        wsAdapter.send(
+            JSON.stringify({
+                data: chatBoxValue,
+            }),
+        );
+        setChatBoxValue("");
     };
 
     const handleSelectFile = () => {
@@ -194,14 +217,20 @@ const ChatBox = (): JSX.Element => {
         input.click();
     };
 
+    const Messages = () => (
+        <>
+            {messages.map((message: Message, index: number) => (
+                <span key={"message" + index}>
+                    {formatDate(message.isoDate)}: {message.data}
+                </span>
+            ))}
+        </>
+    );
+
     return (
         <ChatBoxContainer>
             <MessagesContainer>
-                {messages.map((message: Message, index: number) => (
-                    <span key={"message" + index}>
-                        {message.timestamp}: {message.data}
-                    </span>
-                ))}
+                <Messages />
                 <div ref={messagesEndRef} />
             </MessagesContainer>
             <TextField
