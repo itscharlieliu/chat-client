@@ -10,6 +10,7 @@ import debouncer from "../../utils/debouncer";
 interface FileMetadata {
     filename: string;
     url: string;
+    requiresAuth?: boolean;
 }
 
 interface Message {
@@ -24,6 +25,11 @@ interface DisplayFile {
     confirmed: boolean;
     error?: Error;
     key: string; // UUID
+}
+
+interface FileComponentProps {
+    files: FileMetadata[];
+    key: string;
 }
 
 interface SelectedFilesProps {
@@ -54,6 +60,18 @@ const SelectedFiles = (props: SelectedFilesProps): JSX.Element => {
         result += `${props.displayFiles[i].file.name} ${props.displayFiles[i].progressPercentage}`;
     }
     return <span>{result}</span>;
+};
+
+const FileComponent = (props: FileComponentProps): JSX.Element => {
+    return (
+        <div>
+            {props.files.map((file: FileMetadata, fileIndex: number) => (
+                <a key={"message" + props.key + "file" + fileIndex} href={file.url}>
+                    {file.filename}
+                </a>
+            ))}
+        </div>
+    );
 };
 
 const ChatBoxContainer = styled.div`
@@ -189,7 +207,7 @@ const ChatBox = (): JSX.Element => {
                 continue;
             }
 
-            message.files.push({ filename: file.name, url });
+            message.files.push({ filename: file.name, url, requiresAuth: true });
         }
 
         wsAdapter.send(JSON.stringify(message));
@@ -224,11 +242,7 @@ const ChatBox = (): JSX.Element => {
             {messages.map((message: Message, index: number) => (
                 <div key={"message" + index}>
                     {formatDate(message.isoDate)}: {message.text}
-                    {message.files.map((file: FileMetadata, fileIndex: number) => (
-                        <a key={"message" + index + "file" + fileIndex} href={file.url}>
-                            {file.filename}
-                        </a>
-                    ))}
+                    <FileComponent files={message.files} key={index.toString()} />
                 </div>
             ))}
         </>
