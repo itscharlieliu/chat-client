@@ -4,8 +4,9 @@ import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { v4 as uuidv4 } from "uuid";
 
-import { s3upload } from "../../utils/awsUtils";
+import { s3SignUrl, s3upload } from "../../utils/awsUtils";
 import debouncer from "../../utils/debouncer";
+import useMount from "../../utils/useMount";
 
 interface FileMetadata {
     filename: string;
@@ -63,10 +64,22 @@ const SelectedFiles = (props: SelectedFilesProps): JSX.Element => {
 };
 
 const FileComponent = (props: FileComponentProps): JSX.Element => {
+    const [signedUrls, setSignedUrls] = useState<string[]>([]);
+
+    useEffect(() => {
+        (async () => {
+            const urls = [];
+            for (const file of props.files) {
+                urls.push(await s3SignUrl(file.url));
+            }
+            setSignedUrls(urls);
+        })();
+    }, [props.files]);
+
     return (
         <div>
             {props.files.map((file: FileMetadata, fileIndex: number) => (
-                <a key={"message" + props.key + "file" + fileIndex} href={file.url}>
+                <a key={"message" + props.key + "file" + fileIndex} href={signedUrls[fileIndex]}>
                     {file.filename}
                 </a>
             ))}

@@ -56,7 +56,7 @@ const s3uploader = () => {
     };
 };
 
-const authenticateS3Url = async (url: string) => {
+const S3UrlSigner = () => {
     const credentials = fromCognitoIdentityPool({
         client: new CognitoIdentityClient({
             region: REGION,
@@ -64,16 +64,19 @@ const authenticateS3Url = async (url: string) => {
         identityPoolId: IDENTITY_POOL_ID,
     });
 
-    const s3ObjectUrl = parseUrl(url);
-    const presigner = new S3RequestPresigner({
-        credentials,
-        region: REGION,
-        sha256: Hash.bind(null, "sha256"), // In Node.js
-        //sha256: Sha256 // In browsers
-    });
-    // Create a GET request from S3 url.
-    const signedUrl = await presigner.presign(new HttpRequest(s3ObjectUrl));
-    return formatUrl(signedUrl);
+    return async (url: string): Promise<string> => {
+        const s3ObjectUrl = parseUrl(url);
+        const presigner = new S3RequestPresigner({
+            credentials,
+            region: REGION,
+            sha256: Hash.bind(null, "sha256"), // In Node.js
+            //sha256: Sha256 // In browsers
+        });
+        // Create a GET request from S3 url.
+        const signedUrl = await presigner.presign(new HttpRequest(s3ObjectUrl));
+        return formatUrl(signedUrl);
+    };
 };
 
 export const s3upload = s3uploader();
+export const s3SignUrl = S3UrlSigner();
