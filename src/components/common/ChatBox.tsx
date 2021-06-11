@@ -25,12 +25,12 @@ interface DisplayFile {
     progressPercentage: number; // From 0 to 1
     confirmed: boolean;
     error?: Error;
-    key: string; // UUID
+    id: string; // UUID
 }
 
 interface FileComponentProps {
     files: FileMetadata[];
-    key: string;
+    id: string;
 }
 
 interface SelectedFilesProps {
@@ -79,7 +79,7 @@ const FileComponent = (props: FileComponentProps): JSX.Element => {
     return (
         <div>
             {props.files.map((file: FileMetadata, fileIndex: number) => (
-                <a key={"message" + props.key + "file" + fileIndex} href={signedUrls[fileIndex]}>
+                <a key={"message" + props.id + "file" + fileIndex} href={signedUrls[fileIndex]}>
                     {file.filename}
                 </a>
             ))}
@@ -213,7 +213,7 @@ const ChatBox = (): JSX.Element => {
                 });
             };
 
-            const url = await s3upload(`${displayFiles[i].key}/${file.name}`, file, onProgress, onError);
+            const url = await s3upload(`${displayFiles[i].id}/${file.name}`, file, onProgress, onError);
 
             if (displayFiles[i].error) {
                 console.warn(`Error while uploading file: ${file.name}`);
@@ -242,7 +242,7 @@ const ChatBox = (): JSX.Element => {
             const selection: DisplayFile[] = [];
 
             for (let i = 0; i < input.files.length; ++i) {
-                selection.push({ file: input.files[i], progressPercentage: 0, confirmed: false, key: uuidv4() });
+                selection.push({ file: input.files[i], progressPercentage: 0, confirmed: false, id: uuidv4() });
             }
 
             setDisplayFiles(selection);
@@ -255,7 +255,7 @@ const ChatBox = (): JSX.Element => {
             {messages.map((message: Message, index: number) => (
                 <div key={"message" + index}>
                     {formatDate(message.isoDate)}: {message.text}
-                    <FileComponent files={message.files} key={index.toString()} />
+                    <FileComponent files={message.files} id={index.toString()} />
                 </div>
             ))}
         </>
