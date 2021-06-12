@@ -1,5 +1,5 @@
 import { Progress } from "@aws-sdk/lib-storage";
-import { Button, TextField } from "@material-ui/core";
+import { Button, Chip, TextField } from "@material-ui/core";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { v4 as uuidv4 } from "uuid";
@@ -55,38 +55,6 @@ const createMessage = (text?: string, isoDate?: string, files?: FileMetadata[]):
     };
 };
 
-const SelectedFiles = (props: SelectedFilesProps): JSX.Element => {
-    let result = "";
-    for (let i = 0; i < props.displayFiles.length; ++i) {
-        result += `${props.displayFiles[i].file.name} ${props.displayFiles[i].progressPercentage}`;
-    }
-    return <span>{result}</span>;
-};
-
-const FileComponent = (props: FileComponentProps): JSX.Element => {
-    const [signedUrls, setSignedUrls] = useState<string[]>([]);
-
-    useEffect(() => {
-        (async () => {
-            const urls = [];
-            for (const file of props.files) {
-                urls.push(await s3SignUrl(file.url));
-            }
-            setSignedUrls(urls);
-        })();
-    }, [props.files]);
-
-    return (
-        <div>
-            {props.files.map((file: FileMetadata, fileIndex: number) => (
-                <a key={"message" + props.id + "file" + fileIndex} href={signedUrls[fileIndex]}>
-                    {file.filename}
-                </a>
-            ))}
-        </div>
-    );
-};
-
 const ChatBoxContainer = styled.div`
     display: grid;
     grid-template-columns: auto 150px;
@@ -113,6 +81,46 @@ const MessagesContainer = styled.div`
     padding: 20px;
     border: rgba(0, 0, 0, 0.3) 1px solid;
 `;
+
+const SelectedFilesContainer = styled.div`
+    & > * {
+        margin: 10px;
+    }
+`;
+
+const SelectedFiles = (props: SelectedFilesProps): JSX.Element => {
+    return (
+        <SelectedFilesContainer>
+            {props.displayFiles.map((displayFile: DisplayFile, index: number) => (
+                <Chip key={"DisplayFile" + index} label={displayFile.file.name} />
+            ))}
+        </SelectedFilesContainer>
+    );
+};
+
+const FileComponent = (props: FileComponentProps): JSX.Element => {
+    const [signedUrls, setSignedUrls] = useState<string[]>([]);
+
+    useEffect(() => {
+        (async () => {
+            const urls = [];
+            for (const file of props.files) {
+                urls.push(await s3SignUrl(file.url));
+            }
+            setSignedUrls(urls);
+        })();
+    }, [props.files]);
+
+    return (
+        <div>
+            {props.files.map((file: FileMetadata, fileIndex: number) => (
+                <a key={"message" + props.id + "file" + fileIndex} href={signedUrls[fileIndex]}>
+                    {file.filename}
+                </a>
+            ))}
+        </div>
+    );
+};
 
 const ChatBox = (): JSX.Element => {
     const [messages, setMessages] = useState<Message[]>([]);
