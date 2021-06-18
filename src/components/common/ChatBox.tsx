@@ -57,12 +57,12 @@ const createMessage = (text?: string, isoDate?: string, files?: FileMetadata[]):
 
 const ChatBoxContainer = styled.div`
     display: grid;
-    grid-template-columns: auto 150px;
+    grid-template-columns: minmax(0, 1fr) 150px;
     column-gap: 20px;
     row-gap: 20px;
 
     box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.3);
-    min-width: 600px;
+    width: 600px;
     padding: 20px;
     border-radius: 5px;
 `;
@@ -83,6 +83,8 @@ const MessagesContainer = styled.div`
 `;
 
 const SelectedFilesContainer = styled.div`
+    text-align: left;
+
     & > * {
         margin: 10px;
     }
