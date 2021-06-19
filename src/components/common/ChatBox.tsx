@@ -87,6 +87,7 @@ const SelectedFilesContainer = styled.div`
 
     & > * {
         margin: 10px;
+        max-width: 80%;
     }
 `;
 
