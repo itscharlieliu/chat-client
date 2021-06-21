@@ -35,6 +35,7 @@ interface FileComponentProps {
 
 interface SelectedFilesProps {
     displayFiles: DisplayFile[];
+    onDelete: (index: number) => void;
 }
 
 const formatDate = (isoDate: string) => {
@@ -95,7 +96,11 @@ const SelectedFiles = (props: SelectedFilesProps): JSX.Element => {
     return (
         <SelectedFilesContainer>
             {props.displayFiles.map((displayFile: DisplayFile, index: number) => (
-                <Chip key={"DisplayFile" + index} label={displayFile.file.name} />
+                <Chip
+                    key={"DisplayFile" + index}
+                    label={displayFile.file.name}
+                    onDelete={() => props.onDelete(index)}
+                />
             ))}
         </SelectedFilesContainer>
     );
@@ -261,6 +266,19 @@ const ChatBox = (): JSX.Element => {
         input.click();
     };
 
+    const handleUnselectFile = (index: number) => {
+        setDisplayFiles((currDisplayFiles: DisplayFile[]) => {
+            // TODO Why is this deleting two chips?
+
+            console.log(currDisplayFiles);
+            currDisplayFiles.splice(index, 1);
+
+            console.log(currDisplayFiles);
+
+            return [...currDisplayFiles];
+        });
+    };
+
     const Messages = () => (
         <>
             {messages.map((message: Message, index: number) => (
@@ -310,7 +328,7 @@ const ChatBox = (): JSX.Element => {
             <Button variant={"contained"} onClick={handleSend}>
                 Send
             </Button>
-            <SelectedFiles displayFiles={displayFiles}></SelectedFiles>
+            <SelectedFiles displayFiles={displayFiles} onDelete={handleUnselectFile}></SelectedFiles>
             <Button variant={"contained"} onClick={handleSelectFile}>
                 Test
             </Button>
