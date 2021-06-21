@@ -6,7 +6,6 @@ import { v4 as uuidv4 } from "uuid";
 
 import { s3SignUrl, s3upload } from "../../utils/awsUtils";
 import debouncer from "../../utils/debouncer";
-import useMount from "../../utils/useMount";
 
 interface FileMetadata {
     filename: string;
