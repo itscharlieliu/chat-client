@@ -268,14 +268,11 @@ const ChatBox = (): JSX.Element => {
 
     const handleUnselectFile = (index: number) => {
         setDisplayFiles((currDisplayFiles: DisplayFile[]) => {
-            // TODO Why is this deleting two chips?
+            const newDisplayFiles = [...currDisplayFiles];
 
-            console.log(currDisplayFiles);
-            currDisplayFiles.splice(index, 1);
+            newDisplayFiles.splice(index, 1);
 
-            console.log(currDisplayFiles);
-
-            return [...currDisplayFiles];
+            return newDisplayFiles;
         });
     };
 
