@@ -1,5 +1,5 @@
 import { Progress } from "@aws-sdk/lib-storage";
-import { Button, Chip, TextField } from "@material-ui/core";
+import { Button, Chip, TextField, Typography } from "@material-ui/core";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { v4 as uuidv4 } from "uuid";
@@ -82,6 +82,20 @@ const MessagesContainer = styled.div`
     border: rgba(0, 0, 0, 0.3) 1px solid;
 `;
 
+const MessageContainer = styled.div`
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+`;
+
+const FilesContainer = styled.div`
+    text-align: left;
+
+    & > * {
+        margin: 10px;
+    }
+`
+
 const SelectedFilesContainer = styled.div`
     text-align: left;
 
@@ -119,13 +133,13 @@ const FileComponent = (props: FileComponentProps): JSX.Element => {
     }, [props.files]);
 
     return (
-        <div>
+        <FilesContainer>
             {props.files.map((file: FileMetadata, fileIndex: number) => (
                 <a key={"message" + props.id + "file" + fileIndex} href={signedUrls[fileIndex]}>
                     {file.filename}
                 </a>
             ))}
-        </div>
+        </FilesContainer>
     );
 };
 
@@ -278,10 +292,10 @@ const ChatBox = (): JSX.Element => {
     const Messages = () => (
         <>
             {messages.map((message: Message, index: number) => (
-                <div key={"message" + index}>
-                    {formatDate(message.isoDate)}: {message.text}
+                <MessageContainer key={"message" + index}>
+                    <Typography>{formatDate(message.isoDate)}: {message.text}</Typography>
                     <FileComponent files={message.files} id={index.toString()} />
-                </div>
+                </MessageContainer>
             ))}
         </>
     );
