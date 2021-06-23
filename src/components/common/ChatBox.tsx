@@ -1,5 +1,5 @@
 import { Progress } from "@aws-sdk/lib-storage";
-import { Button, Chip, TextField, Typography } from "@material-ui/core";
+import { Button, Chip, CircularProgress, TextField, Typography } from "@material-ui/core";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { v4 as uuidv4 } from "uuid";
@@ -94,7 +94,7 @@ const FilesContainer = styled.div`
     & > * {
         margin: 10px;
     }
-`
+`;
 
 const SelectedFilesContainer = styled.div`
     text-align: left;
@@ -110,6 +110,7 @@ const SelectedFiles = (props: SelectedFilesProps): JSX.Element => {
         <SelectedFilesContainer>
             {props.displayFiles.map((displayFile: DisplayFile, index: number) => (
                 <Chip
+                    avatar={<CircularProgress variant={"determinate"} value={displayFile.progressPercentage} />}
                     key={"DisplayFile" + index}
                     label={displayFile.file.name}
                     onDelete={() => props.onDelete(index)}
@@ -293,7 +294,9 @@ const ChatBox = (): JSX.Element => {
         <>
             {messages.map((message: Message, index: number) => (
                 <MessageContainer key={"message" + index}>
-                    <Typography>{formatDate(message.isoDate)}: {message.text}</Typography>
+                    <Typography>
+                        {formatDate(message.isoDate)}: {message.text}
+                    </Typography>
                     <FileComponent files={message.files} id={index.toString()} />
                 </MessageContainer>
             ))}
