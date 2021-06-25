@@ -96,6 +96,15 @@ const FilesContainer = styled.div`
     }
 `;
 
+const FileChip = styled(Chip)`
+    &::after {
+        position: absolute;
+        background-color: red;
+        width: 50%;
+        height: 20px;
+    }
+`;
+
 const SelectedFilesContainer = styled.div`
     text-align: left;
 
@@ -109,7 +118,7 @@ const SelectedFiles = (props: SelectedFilesProps): JSX.Element => {
     return (
         <SelectedFilesContainer>
             {props.displayFiles.map((displayFile: DisplayFile, index: number) => (
-                <Chip
+                <FileChip
                     avatar={<CircularProgress variant={"determinate"} value={displayFile.progressPercentage} />}
                     key={"DisplayFile" + index}
                     label={displayFile.file.name}
