@@ -4,14 +4,10 @@ import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { v4 as uuidv4 } from "uuid";
 
-import { s3SignUrl, s3upload } from "../../utils/awsUtils";
+import { s3upload } from "../../utils/awsUtils";
 import debouncer from "../../utils/debouncer";
 
-interface FileMetadata {
-    filename: string;
-    url: string;
-    requiresAuth?: boolean;
-}
+import FileComponent, { FileMetadata } from "./FileComponent";
 
 interface Message {
     text: string;
@@ -25,11 +21,6 @@ interface DisplayFile {
     confirmed: boolean;
     error?: Error;
     id: string; // UUID
-}
-
-interface FileComponentProps {
-    files: FileMetadata[];
-    id: string;
 }
 
 interface SelectedFilesProps {
@@ -88,14 +79,6 @@ const MessageContainer = styled.div`
     flex-direction: column;
 `;
 
-const FilesContainer = styled.div`
-    text-align: left;
-
-    & > * {
-        margin: 10px;
-    }
-`;
-
 const FileChip = styled(Chip)`
     &::after {
         position: absolute;
@@ -126,30 +109,6 @@ const SelectedFiles = (props: SelectedFilesProps): JSX.Element => {
                 />
             ))}
         </SelectedFilesContainer>
-    );
-};
-
-const FileComponent = (props: FileComponentProps): JSX.Element => {
-    const [signedUrls, setSignedUrls] = useState<string[]>([]);
-
-    useEffect(() => {
-        (async () => {
-            const urls = [];
-            for (const file of props.files) {
-                urls.push(await s3SignUrl(file.url));
-            }
-            setSignedUrls(urls);
-        })();
-    }, [props.files]);
-
-    return (
-        <FilesContainer>
-            {props.files.map((file: FileMetadata, fileIndex: number) => (
-                <a key={"message" + props.id + "file" + fileIndex} href={signedUrls[fileIndex]}>
-                    {file.filename}
-                </a>
-            ))}
-        </FilesContainer>
     );
 };
 
