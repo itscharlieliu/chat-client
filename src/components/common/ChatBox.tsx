@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { s3upload } from "../../utils/awsUtils";
 import debouncer from "../../utils/debouncer";
+import formatDate from "../../utils/formatDate";
 
 import FileComponent, { FileMetadata } from "./FileComponent";
 
@@ -27,16 +28,6 @@ interface SelectedFilesProps {
     displayFiles: DisplayFile[];
     onDelete: (index: number) => void;
 }
-
-const formatDate = (isoDate: string) => {
-    const date = new Date(isoDate);
-
-    return new Intl.DateTimeFormat("en", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-    }).format(date);
-};
 
 const createMessage = (text?: string, isoDate?: string, files?: FileMetadata[]): Message => {
     return {
