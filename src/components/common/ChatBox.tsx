@@ -5,17 +5,11 @@ import styled from "styled-components";
 import { v4 as uuidv4 } from "uuid";
 
 import { s3upload } from "../../utils/awsUtils";
-import createMessage from "../../utils/createMessage";
+import createMessage, { Message } from "../../utils/createMessage";
 import debouncer from "../../utils/debouncer";
 import formatDate from "../../utils/formatDate";
 
 import FileComponent, { FileMetadata } from "./FileComponent";
-
-interface Message {
-    text: string;
-    isoDate: string;
-    files: FileMetadata[];
-}
 
 interface DisplayFile {
     file: File;

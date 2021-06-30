@@ -1,3 +1,11 @@
+import { FileMetadata } from "../components/common/FileComponent";
+
+export interface Message {
+    text: string;
+    isoDate: string;
+    files: FileMetadata[];
+}
+
 const createMessage = (text?: string, isoDate?: string, files?: FileMetadata[]): Message => {
     return {
         text: text ? text : "",
