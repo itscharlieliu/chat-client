@@ -9,7 +9,7 @@ import createMessage, { Message } from "../../utils/createMessage";
 import debouncer from "../../utils/debouncer";
 import formatDate from "../../utils/formatDate";
 
-import FileComponent, { FileMetadata } from "./FileComponent";
+import FileComponent from "./FileComponent";
 
 interface DisplayFile {
     file: File;
