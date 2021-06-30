@@ -5,6 +5,7 @@ import styled from "styled-components";
 import { v4 as uuidv4 } from "uuid";
 
 import { s3upload } from "../../utils/awsUtils";
+import createMessage from "../../utils/createMessage";
 import debouncer from "../../utils/debouncer";
 import formatDate from "../../utils/formatDate";
 
@@ -28,14 +29,6 @@ interface SelectedFilesProps {
     displayFiles: DisplayFile[];
     onDelete: (index: number) => void;
 }
-
-const createMessage = (text?: string, isoDate?: string, files?: FileMetadata[]): Message => {
-    return {
-        text: text ? text : "",
-        isoDate: isoDate ? isoDate : new Date().toISOString(),
-        files: files ? files : [],
-    };
-};
 
 const ChatBoxContainer = styled.div`
     display: grid;
